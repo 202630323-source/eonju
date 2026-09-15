@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>스마트 시험 공부 시간 & 순서 플래너</title>
+    <style>
+        :root {
+            --primary: #4F46E5;
+            --primary-hover: #4338CA;
+            --bg: #F9FAFB;
+            --card-bg: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+            --accent: #EEF2FF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            padding: 20px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px 0;
+        }
+
+        header h1 {
+            color: var(--primary);
+            font-size: 2.2rem;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            margin-bottom: 24px;
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.3rem;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 6px;
+            font-size: 0.95rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        .subject-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px;
+        }
+
+        .subject-table th, .subject-table td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .subject-table th {
+            background-color: var(--accent);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 16px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            width: 100%;
+            padding: 14px;
+            font-size: 1.1rem;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: #E5E7EB;
+            color: #374151;
+        }
+
+        .btn-secondary:hover {
+            background-color: #D1D5DB;
+        }
+
+        .btn-danger {
+            background-color: #FEE2E2;
+            color: #DC2626;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+        }
+
+        .btn-danger:hover {
+            background-color: #FCA5A5;
+        }
+
+        #resultSection {
+            display: none;
+        }
+
+        .summary-box {
+            background-color: var(--accent);
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+            text-align: center;
+        }
+
+        .summary-item h4 {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+
+        .summary-item p {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .timeline-item {
+            border-left: 4px solid var(--primary);
+            padding: 14px 16px;
+            background: #F9FAFB;
+            margin-bottom: 12px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .timeline-item h3 {
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .badge {
+            background: var(--primary);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: normal;
+        }
+
+        .timeline-details {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+
+        .session-info {
+            font-size: 0.88rem;
+            color: #4B5563;
+            background-color: #F3F4F6;
+            padding: 6px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-top: 4px;
+        }
+
+        .progress-bar-bg {
+            background-color: #E5E7EB;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar-fill {
+            background-color: var(--primary);
+            height: 100%;
+        }
+
+        .tip-box {
+            background-color: #FEF3C7;
+            border-left: 4px solid #F59E0B;
+            padding: 14px 16px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #92400E;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>📚 스마트 시험 공부 시간 & 순서 플래너</h1>
+        <p>성적, 예측 난이도, 시험일, 흥미도, 집중 가능 시간을 고려한 최적의 플랜을 추천해 드립니다.</p>
+    </header>
+
+    <!-- 1. 기본 설정 -->
+    <div class="card">
+        <h2>1. 기본 학습 환경 설정</h2>
+        <div class="grid-3">
+            <div class="form-group">
+                <label for="startDate">공부 시작일</label>
+                <input type="date" id="startDate" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="dailyHours">하루 평균 공부 가능 시간 (시간)</label>
+                <input type="number" id="dailyHours" class="form-control" value="6" min="1" max="18">
+            </div>
+            <div class="form-group">
+                <label for="focusTime">1회 연속 집중 시간 (분)</label>
+                <select id="focusTime" class="form-control">
+                    <option value="25">25분 (뽀모도로 - 단기 집중형)</option>
+                    <option value="45" selected>45분 (학교 수업형 - 표준)</option>
+                    <option value="60">60분 (1시간 단위 딥워크)</option>
+                    <option value="90">90분 (장시간 몰입형)</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 과목 정보 입력 -->
+    <div class="card">
+        <h2>2. 과목별 상세 정보 입력</h2>
+        <div class="table-responsive">
+            <table class="subject-table" id="subjectTable">
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">과목명</th>
+                        <th style="width: 18%;">시험 날짜</th>
+                        <th style="width: 22%;">현재 성적 (취약도)</th>
+                        <th style="width: 18%;">예측 난이도</th>
+                        <th style="width: 17%;">흥미도</th>
+                        <th style="width: 5%;">삭제</th>
+                    </tr>
+                </thead>
+                <tbody id="subjectTableBody">
+                    <!-- 동적 입력 행 -->
+                </tbody>
+            </table>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="addSubjectRow()">+ 과목 추가하기</button>
+    </div>
+
+    <button type="button" class="btn btn-primary" onclick="calculatePlan()">🚀 맞춤형 공부 계획 생성하기</button>
+
+    <!-- 3. 결과 출력 영역 -->
+    <div class="card" id="resultSection">
+        <h2>🎯 맞춤형 공부 시간 & 순서 분배 결과</h2>
+        
+        <div class="summary-box">
+            <div class="summary-item">
+                <h4>총 남은 준비 기간</h4>
+                <p id="sumTotalDays">- 일</p>
+            </div>
+            <div class="summary-item">
+                <h4>총 가용 공부 시간</h4>
+                <p id="sumTotalHours">- 시간</p>
+            </div>
+            <div class="summary-item">
+                <h4>등록 과목 수</h4>
+                <p id="sumSubjectCount">- 개</p>
+            </div>
+        </div>
+
+        <h3>📅 과목별 시간 배분 및 추천 순서</h3>
+        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
+            * 순서는 <strong>성적 취약도, 시험 난이도, 흥미도, 시험 임박 D-Day</strong>를 종합 계산한 우선순위 순서입니다.
+        </p>
+
+        <div id="planList">
+            <!-- 결과 리스트 -->
+        </div>
+
+        <div class="tip-box">
+            <strong>💡 스마트 공부 전략 Tip:</strong>
+            <ul style="margin-left: 20px; margin-top: 6px; line-height: 1.6;">
+                <li><strong>우선순위 높음 (#1~#2):</strong> 하루 중 가장 두뇌 집중도가 높은 <strong>오전이나 공부 시작 직후</strong>에 배치하세요.</li>
+                <li><strong>흥미도가 낮은 과목:</strong> 선택하신 <strong>1회 집중시간</strong> 단위로 끊어서 집중 후 반드시 5~10분 휴식을 취하세요.</li>
+                <li><strong>시험 직전(D-2~D-1):</strong> 추천 순위와 별개로 <strong>시험 날짜가 가장 빠른 과목</strong>의 최종 점검 및 복습을 최우선으로 진행하세요.</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    // 오늘 날짜를 기본값으로 설정
+    document.getElementById('startDate').valueAsDate = new Date();
+
+    // 기본 예시 과목 데이터
+    const defaultSubjects = [
+        { name: "수학", date: getFutureDate(10), score: "40", diff: "high", interest: "low" },
+        { name: "영어", date: getFutureDate(12), score: "70", diff: "medium", interest: "medium" },
+        { name: "국어", date: getFutureDate(8), score: "90", diff: "low", interest: "high" },
+        { name: "탐구 (사탐/과탐)", date: getFutureDate(11), score: "60", diff: "high", interest: "medium" }
+    ];
+
+    function getFutureDate(daysAhead) {
+        const d = new Date();
+        d.setDate(d.getDate() + daysAhead);
+        return d.toISOString().split('T')[0];
+    }
+
+    function addSubjectRow(name = "", date = "", score = "70", diff = "medium", interest = "medium") {
+        const tbody = document.getElementById('subjectTableBody');
+        const row = document.createElement('tr');
+
+        row.innerHTML = `
+            <td><input type="text" class="form-control subj-name" value="${name}" placeholder="예: 수학"></td>
+            <td><input type="date" class="form-control subj-date" value="${date}"></td>
+            <td>
+                <select class="form-control subj-score">
+                    <option value="40" ${score <= 50 ? 'selected' : ''}>취약 (50점 이하)</option>
+                    <option value="70" ${score > 50 && score <= 80 ? 'selected' : ''}>보통 (60~80점)</option>
+                    <option value="90" ${score > 80 ? 'selected' : ''}>우수 (80점 이상)</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-control subj-diff">
+                    <option value="high" ${diff === 'high' ? 'selected' : ''}>상 (어려움)</option>
+                    <option value="medium" ${diff === 'medium' ? 'selected' : ''}>중 (보통)</option>
+                    <option value="low" ${diff === 'low' ? 'selected' : ''}>하 (쉬움)</option>
+                </select>
+            </td>
+            <td>
+                <select class="form-control subj-interest">
+                    <option value="high" ${interest === 'high' ? 'selected' : ''}>높음 (좋아함)</option>
+                    <option value="medium" ${interest === 'medium' ? 'selected' : ''}>보통</option>
+                    <option value="low" ${interest === 'low' ? 'selected' : ''}>낮음 (지루함)</option>
+                </select>
+            </td>
+            <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">삭제</button></td>
+        `;
+        tbody.appendChild(row);
+    }
+
+    function removeRow(btn) {
+        const row = btn.closest('tr');
+        row.remove();
+    }
+
+    // 초기 예시 데이터 생성
+    defaultSubjects.forEach(s => addSubjectRow(s.name, s.date, s.score, s.diff, s.interest));
+
+    function calculatePlan() {
+        const startDateVal = document.getElementById('startDate').value;
+        const dailyHours = parseFloat(document.getElementById('dailyHours').value);
+        const focusMinutes = parseInt(document.getElementById('focusTime').value);
+
+        if (!startDateVal) {
+            alert('공부 시작일을 선택해주세요.');
+            return;
+        }
+
+        const startDate = new Date(startDateVal);
+        const rows = document.querySelectorAll('#subjectTableBody tr');
+
+        if (rows.length === 0) {
+            alert('최소 하나 이상의 과목을 입력해주세요.');
+            return;
+        }
+
+        let subjects = [];
+        let maxDaysToExam = -Infinity;
+
+        for (let row of rows) {
+            const name = row.querySelector('.subj-name').value.trim();
+            const dateVal = row.querySelector('.subj-date').value;
+            const scoreVal = parseFloat(row.querySelector('.subj-score').value);
+            const diffVal = row.querySelector('.subj-diff').value;
+            const interestVal = row.querySelector('.subj-interest').value;
+
+            if (!name || !dateVal) {
+                alert('모든 과목의 이름과 시험 날짜를 채워주세요.');
+                return;
+            }
+
+            const examDate = new Date(dateVal);
+            const timeDiff = examDate - startDate;
+            const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+
+            if (daysLeft <= 0) {
+                alert(`'${name}' 과목의 시험 날짜가 공부 시작일보다 같거나 이전입니다.`);
+                return;
+            }
+
+            if (daysLeft > maxDaysToExam) maxDaysToExam = daysLeft;
+
+            // 가중치 계산
+            let scoreWeight = (100 - scoreVal) / 100;
+            if (scoreWeight < 0.2) scoreWeight = 0.2;
+
+            let diffWeight = 1.0;
+            if (diffVal === 'high') diffWeight = 1.4;
+            else if (diffVal === 'medium') diffWeight = 1.0;
+            else if (diffVal === 'low') diffWeight = 0.7;
+
+            let interestWeight = 1.0;
+            if (interestVal === 'low') interestWeight = 1.25;
+            else if (interestVal === 'medium') interestWeight = 1.0;
+            else if (interestVal === 'high') interestWeight = 0.85;
+
+            let urgencyWeight = 1 / Math.sqrt(daysLeft);
+
+            let timeWeight = scoreWeight * diffWeight * interestWeight;
+            let priorityScore = (scoreWeight * 1.5 + diffWeight * 1.2 + interestWeight * 1.0) * (1 + urgencyWeight);
+
+            subjects.push({
+                name,
+                examDate: dateVal,
+                daysLeft,
+                scoreVal,
+                diffVal,
+                interestVal,
+                priorityScore,
+                timeWeight
+            });
+        }
+
+        const totalDays = maxDaysToExam;
+        const totalAvailableHours = totalDays * dailyHours;
+        const totalWeightSum = subjects.reduce((sum, s) => sum + s.timeWeight, 0);
+
+        subjects.forEach(s => {
+            s.allocatedHours = Math.round((s.timeWeight / totalWeightSum) * totalAvailableHours * 10) / 10;
+            s.percentage = Math.round((s.allocatedHours / totalAvailableHours) * 100);
+            
+            const totalMinutes = s.allocatedHours * 60;
+            s.sessionCount = Math.round(totalMinutes / focusMinutes);
+        });
+
+        subjects.sort((a, b) => b.priorityScore - a.priorityScore);
+
+        document.getElementById('sumTotalDays').textContent = `${totalDays} 일`;
+        document.getElementById('sumTotalHours').textContent = `${totalAvailableHours} 시간`;
+        document.getElementById('sumSubjectCount').textContent = `${subjects.length} 개`;
+
+        const planList = document.getElementById('planList');
+        planList.innerHTML = '';
+
+        subjects.forEach((s, index) => {
+            let diffText = s.diffVal === 'high' ? '상' : s.diffVal === 'medium' ? '중' : '하';
+            let scoreText = s.scoreVal <= 50 ? '취약 (50점 이하)' : s.scoreVal <= 80 ? '보통 (60~80점)' : '우수 (80점 이상)';
+            let interestText = s.interestVal === 'high' ? '높음' : s.interestVal === 'medium' ? '보통' : '낮음';
+
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            item.innerHTML = `
+                <h3>
+                    <span><strong>#${index + 1}순위: ${s.name}</strong></span>
+                    <span class="badge">${s.allocatedHours} 시간 추천 (${s.percentage}%)</span>
+                </h3>
+                <div class="timeline-details">
+                    📅 시험: <strong>D-${s.daysLeft}</strong> (${s.examDate}) | 
+                    📊 성적: <strong>${scoreText}</strong> | 
+                    🔥 난이도: <strong>${diffText}</strong> | 
+                    ❤️ 흥미도: <strong>${interestText}</strong>
+                </div>
+                <div class="session-info">
+                    🎯 <strong>세션 플랜:</strong> ${focusMinutes}분 집중 기준 <strong>총 약 ${s.sessionCount}회 세션</strong> 학습 권장
+                </div>
+                <div class="progress-bar-bg">
+                    <div class="progress-bar-fill" style="width: ${s.percentage}%"></div>
+                </div>
+            `;
+            planList.appendChild(item);
+        });
+
+        document.getElementById('resultSection').style.display = 'block';
+        document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>
