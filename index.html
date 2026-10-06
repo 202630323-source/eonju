@@ -3,17 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>스마트 시험 공부 시간 & 순서 플래너</title>
+    <title>분배의 정석 - AI 학습 우선순위 최적화</title>
+    <!-- Chart.js & html2pdf.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         :root {
-            --primary: #4F46E5;
-            --primary-hover: #4338CA;
-            --bg: #F9FAFB;
-            --card-bg: #FFFFFF;
-            --text-main: #1F2937;
-            --text-muted: #6B7280;
-            --border: #E5E7EB;
-            --accent: #EEF2FF;
+            --bg-color: #0A0C0E;
+            --card-bg: #14181D;
+            --card-border: #222933;
+            --accent-orange: #FF5E36;
+            --accent-orange-glow: rgba(255, 94, 54, 0.25);
+            --text-main: #F0F3F7;
+            --text-muted: #8A96A3;
+            --input-bg: #1C222B;
+            --success: #10B981;
+            --radius: 14px;
         }
 
         * {
@@ -24,530 +32,562 @@
         }
 
         body {
-            background-color: var(--bg);
+            background-color: var(--bg-color);
             color: var(--text-main);
-            padding: 20px;
-            line-height: 1.5;
+            padding: 20px 12px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
         }
 
         .container {
-            max-width: 950px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
 
+        /* 헤더 디자인 */
         header {
             text-align: center;
-            margin-bottom: 30px;
-            padding: 20px 0;
+            padding: 16px 0 8px 0;
         }
 
-        header h1 {
-            color: var(--primary);
-            font-size: 2.2rem;
-            margin-bottom: 8px;
-        }
-
-        header p {
-            color: var(--text-muted);
-            font-size: 1rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            margin-bottom: 24px;
-            border: 1px solid var(--border);
-        }
-
-        .card h2 {
-            font-size: 1.3rem;
-            margin-bottom: 16px;
+        .logo {
+            font-size: 1.8rem;
+            font-weight: 800;
             color: var(--text-main);
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
         }
 
-        .form-group {
+        .logo i {
+            color: var(--accent-orange);
+            filter: drop-shadow(0 0 8px var(--accent-orange));
+        }
+
+        .subtitle {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* 메인 그리드 레이아웃 */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 768px) {
+            .main-grid {
+                grid-template-columns: 360px 1fr;
+            }
+        }
+
+        /* 카드 공통 스타일 */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: var(--radius);
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-title {
+            font-size: 1.05rem;
+            font-weight: 700;
             margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-main);
+            border-bottom: 1px solid var(--card-border);
+            padding-bottom: 10px;
+        }
+
+        .card-title i {
+            color: var(--accent-orange);
+        }
+
+        /* 폼 입력 요소 */
+        .form-group {
+            margin-bottom: 14px;
         }
 
         .form-group label {
             display: block;
-            font-weight: 600;
+            font-size: 0.82rem;
+            color: var(--text-muted);
             margin-bottom: 6px;
-            font-size: 0.95rem;
+            font-weight: 600;
         }
 
         .form-control {
             width: 100%;
             padding: 10px 12px;
-            border: 1px solid var(--border);
-            border-radius: 6px;
-            font-size: 0.95rem;
-            transition: border-color 0.2s;
+            background-color: var(--input-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            transition: all 0.2s;
         }
 
         .form-control:focus {
-            outline: none;
-            border-color: var(--primary);
+            border-color: var(--accent-orange);
+            box-shadow: 0 0 0 2px var(--accent-orange-glow);
         }
 
-        .grid-3 {
+        /* 슬라이더 컨트롤 */
+        .range-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .range-slider {
+            flex: 1;
+            accent-color: var(--accent-orange);
+            height: 5px;
+            background: var(--input-bg);
+            border-radius: 5px;
+        }
+
+        .range-value {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-orange);
+            width: 24px;
+            text-align: right;
+        }
+
+        .grid-2 {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
 
-        @media (max-width: 768px) {
-            .grid-3 {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            margin-bottom: 16px;
-        }
-
-        .subject-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 700px;
-        }
-
-        .subject-table th, .subject-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid var(--border);
-        }
-
-        .subject-table th {
-            background-color: var(--accent);
-            color: var(--primary);
-            font-weight: 600;
-            font-size: 0.9rem;
-        }
-
+        /* 버튼 스타일 */
         .btn {
-            display: inline-block;
-            padding: 10px 16px;
-            font-size: 0.95rem;
-            font-weight: 600;
+            width: 100%;
+            padding: 12px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.95rem;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .btn-primary {
-            background-color: var(--primary);
-            color: white;
-            width: 100%;
-            padding: 14px;
-            font-size: 1.1rem;
-        }
-
-        .btn-primary:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .btn-secondary {
-            background-color: #E5E7EB;
-            color: #374151;
-        }
-
-        .btn-secondary:hover {
-            background-color: #D1D5DB;
-        }
-
-        .btn-danger {
-            background-color: #FEE2E2;
-            color: #DC2626;
-            padding: 6px 10px;
-            font-size: 0.85rem;
-        }
-
-        .btn-danger:hover {
-            background-color: #FCA5A5;
-        }
-
-        #resultSection {
-            display: none;
-        }
-
-        .summary-box {
-            background-color: var(--accent);
-            border-radius: 8px;
-            padding: 16px;
-            margin-bottom: 20px;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: 12px;
-            text-align: center;
-        }
-
-        .summary-item h4 {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .summary-item p {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .timeline-item {
-            border-left: 4px solid var(--primary);
-            padding: 14px 16px;
-            background: #F9FAFB;
-            margin-bottom: 12px;
-            border-radius: 0 8px 8px 0;
-        }
-
-        .timeline-item h3 {
-            font-size: 1.1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-        }
-
-        .badge {
-            background: var(--primary);
-            color: white;
-            padding: 3px 10px;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: normal;
-        }
-
-        .timeline-details {
-            font-size: 0.9rem;
-            color: var(--text-muted);
-            margin-bottom: 6px;
-        }
-
-        .session-info {
-            font-size: 0.88rem;
-            color: #4B5563;
-            background-color: #F3F4F6;
-            padding: 6px 10px;
-            border-radius: 4px;
-            display: inline-block;
-            margin-top: 4px;
-        }
-
-        .progress-bar-bg {
-            background-color: #E5E7EB;
-            height: 8px;
-            border-radius: 4px;
-            overflow: hidden;
+            background-color: var(--accent-orange);
+            color: #fff;
+            box-shadow: 0 4px 12px var(--accent-orange-glow);
             margin-top: 8px;
         }
 
-        .progress-bar-fill {
-            background-color: var(--primary);
-            height: 100%;
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
         }
 
-        .tip-box {
-            background-color: #FEF3C7;
-            border-left: 4px solid #F59E0B;
-            padding: 14px 16px;
-            border-radius: 0 8px 8px 0;
-            margin-top: 20px;
-            font-size: 0.9rem;
-            color: #92400E;
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            width: auto;
+        }
+
+        .btn-outline:hover {
+            color: var(--text-main);
+            border-color: var(--text-muted);
+        }
+
+        /* 우선순위 리스트 카드 */
+        .task-item {
+            background-color: var(--input-bg);
+            border-left: 4px solid var(--accent-orange);
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: transform 0.2s;
+        }
+
+        .task-item:hover {
+            transform: translateX(3px);
+        }
+
+        .task-info h4 {
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .task-tags {
+            display: flex;
+            gap: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .badge-high { background-color: rgba(255, 94, 54, 0.2); color: #FF5E36; }
+        .badge-mid { background-color: rgba(245, 158, 11, 0.2); color: #F59E0B; }
+        .badge-low { background-color: rgba(16, 185, 129, 0.2); color: #10B981; }
+
+        .task-score {
+            text-align: right;
+        }
+
+        .score-num {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent-orange);
+        }
+
+        .score-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+
+        .delete-btn {
+            background: none;
+            border: none;
+            color: #6B7280;
+            cursor: pointer;
+            padding: 4px 8px;
+            margin-left: 8px;
+        }
+
+        .delete-btn:hover {
+            color: #EF4444;
+        }
+
+        /* 차트 영역 */
+        .chart-container {
+            position: relative;
+            height: 180px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 30px 10px;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .empty-state i {
+            font-size: 2rem;
+            margin-bottom: 8px;
+            display: block;
+            opacity: 0.5;
+        }
+
+        /* PDF 저장용 스타일 */
+        #pdf-export-area {
+            background-color: var(--bg-color);
+            padding: 10px;
+            border-radius: var(--radius);
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <!-- 헤더 -->
     <header>
-        <h1>📚 스마트 시험 공부 시간 & 순서 플래너</h1>
-        <p>성적, 예측 난이도, 시험일, 흥미도, 집중 가능 시간을 고려한 최적의 플랜을 추천해 드립니다.</p>
+        <div class="logo">
+            <i class="fa-solid fa-fire-flame-curved"></i>
+            <span>분배의 정석</span>
+        </div>
+        <p class="subtitle">모든 요소(난이도·성적·흥미도)를 고려한 AI 학습 우선순위 솔루션</p>
     </header>
 
-    <!-- 1. 기본 설정 -->
-    <div class="card">
-        <h2>1. 기본 학습 환경 설정</h2>
-        <div class="grid-3">
-            <div class="form-group">
-                <label for="startDate">공부 시작일</label>
-                <input type="date" id="startDate" class="form-control">
+    <div class="main-grid">
+        <!-- 1. 과목 정보 입력 섹션 (초기 대화 프롬프트 요소 전체 포함) -->
+        <div class="card">
+            <div class="card-title">
+                <span><i class="fa-solid fa-sliders"></i> 과목 데이터 입력</span>
             </div>
-            <div class="form-group">
-                <label for="dailyHours">하루 평균 공부 가능 시간 (시간)</label>
-                <input type="number" id="dailyHours" class="form-control" value="6" min="1" max="18">
-            </div>
-            <div class="form-group">
-                <label for="focusTime">1회 연속 집중 시간 (분)</label>
-                <select id="focusTime" class="form-control">
-                    <option value="25">25분 (뽀모도로 - 단기 집중형)</option>
-                    <option value="45" selected>45분 (학교 수업형 - 표준)</option>
-                    <option value="60">60분 (1시간 단위 딥워크)</option>
-                    <option value="90">90분 (장시간 몰입형)</option>
-                </select>
-            </div>
-        </div>
-    </div>
+            
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="subjectName">과목 / 과제명</label>
+                    <input type="text" id="subjectName" class="form-control" placeholder="예: 수학 I 기말고사 준비" required>
+                </div>
 
-    <!-- 2. 과목 정보 입력 -->
-    <div class="card">
-        <h2>2. 과목별 상세 정보 입력</h2>
-        <div class="table-responsive">
-            <table class="subject-table" id="subjectTable">
-                <thead>
-                    <tr>
-                        <th style="width: 20%;">과목명</th>
-                        <th style="width: 18%;">시험 날짜</th>
-                        <th style="width: 22%;">현재 성적 (취약도)</th>
-                        <th style="width: 18%;">예측 난이도</th>
-                        <th style="width: 17%;">흥미도</th>
-                        <th style="width: 5%;">삭제</th>
-                    </tr>
-                </thead>
-                <tbody id="subjectTableBody">
-                    <!-- 동적 입력 행 -->
-                </tbody>
-            </table>
-        </div>
-        <button type="button" class="btn btn-secondary" onclick="addSubjectRow()">+ 과목 추가하기</button>
-    </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="importance">중요도 (1-10)</label>
+                        <div class="range-container">
+                            <input type="range" id="importance" class="range-slider" min="1" max="10" value="5" oninput="updateVal('impVal', this.value)">
+                            <span id="impVal" class="range-value">5</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="urgency">긴급도 (1-10)</label>
+                        <div class="range-container">
+                            <input type="range" id="urgency" class="range-slider" min="1" max="10" value="5" oninput="updateVal('urgVal', this.value)">
+                            <span id="urgVal" class="range-value">5</span>
+                        </div>
+                    </div>
+                </div>
 
-    <button type="button" class="btn btn-primary" onclick="calculatePlan()">🚀 맞춤형 공부 계획 생성하기</button>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="difficulty">예상 난이도 (1-10)</label>
+                        <div class="range-container">
+                            <input type="range" id="difficulty" class="range-slider" min="1" max="10" value="5" oninput="updateVal('diffVal', this.value)">
+                            <span id="diffVal" class="range-value">5</span>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="interest">흥미 및 집중도 (1-10)</label>
+                        <div class="range-container">
+                            <input type="range" id="interest" class="range-slider" min="1" max="10" value="5" oninput="updateVal('intVal', this.value)">
+                            <span id="intVal" class="range-value">5</span>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- 3. 결과 출력 영역 -->
-    <div class="card" id="resultSection">
-        <h2>🎯 맞춤형 공부 시간 & 순서 분배 결과</h2>
-        
-        <div class="summary-box">
-            <div class="summary-item">
-                <h4>총 남은 준비 기간</h4>
-                <p id="sumTotalDays">- 일</p>
-            </div>
-            <div class="summary-item">
-                <h4>총 가용 공부 시간</h4>
-                <p id="sumTotalHours">- 시간</p>
-            </div>
-            <div class="summary-item">
-                <h4>등록 과목 수</h4>
-                <p id="sumSubjectCount">- 개</p>
-            </div>
+                <div class="grid-2">
+                    <div class="form-group">
+                        <label for="prevScore">전 성적 (점수/등급)</label>
+                        <input type="number" id="prevScore" class="form-control" placeholder="예: 65 (점수)" min="0" max="100">
+                    </div>
+                    <div class="form-group">
+                        <label for="deadline">남은 마감일 (일)</label>
+                        <input type="number" id="deadline" class="form-control" placeholder="예: 7" min="1" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary">
+                    <i class="fa-solid fa-plus"></i> 우선순위 분석 및 추가
+                </button>
+            </form>
         </div>
 
-        <h3>📅 과목별 시간 배분 및 추천 순서</h3>
-        <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px;">
-            * 순서는 <strong>성적 취약도, 시험 난이도, 흥미도, 시험 임박 D-Day</strong>를 종합 계산한 우선순위 순서입니다.
-        </p>
+        <!-- 2. 결과 리스트 및 차트 섹션 -->
+        <div id="pdf-export-area">
+            <div class="card" style="margin-bottom: 16px;">
+                <div class="card-title">
+                    <span><i class="fa-solid fa-list-check"></i> 최적화된 학습 우선순위</span>
+                    <button class="btn btn-outline" onclick="exportToPDF()">
+                        <i class="fa-solid fa-file-pdf"></i> PDF 저장
+                    </button>
+                </div>
 
-        <div id="planList">
-            <!-- 결과 리스트 -->
-        </div>
+                <div id="taskList">
+                    <div class="empty-state">
+                        <i class="fa-solid fa-folder-open"></i>
+                        등록된 과목이 없습니다.<br>왼쪽에서 과목 정보를 입력해 보세요.
+                    </div>
+                </div>
+            </div>
 
-        <div class="tip-box">
-            <strong>💡 스마트 공부 전략 Tip:</strong>
-            <ul style="margin-left: 20px; margin-top: 6px; line-height: 1.6;">
-                <li><strong>우선순위 높음 (#1~#2):</strong> 하루 중 가장 두뇌 집중도가 높은 <strong>오전이나 공부 시작 직후</strong>에 배치하세요.</li>
-                <li><strong>흥미도가 낮은 과목:</strong> 선택하신 <strong>1회 집중시간</strong> 단위로 끊어서 집중 후 반드시 5~10분 휴식을 취하세요.</li>
-                <li><strong>시험 직전(D-2~D-1):</strong> 추천 순위와 별개로 <strong>시험 날짜가 가장 빠른 과목</strong>의 최종 점검 및 복습을 최우선으로 진행하세요.</li>
-            </ul>
+            <!-- 시각적 그래프 (간결하게 유지) -->
+            <div class="card">
+                <div class="card-title">
+                    <span><i class="fa-chart-simple"></i> 학습 시간 분배 비중</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // 오늘 날짜를 기본값으로 설정
-    document.getElementById('startDate').valueAsDate = new Date();
+    let tasks = JSON.parse(localStorage.getItem('distribution_tasks')) || [];
+    let priorityChart = null;
 
-    // 기본 예시 과목 데이터
-    const defaultSubjects = [
-        { name: "수학", date: getFutureDate(10), score: "40", diff: "high", interest: "low" },
-        { name: "영어", date: getFutureDate(12), score: "70", diff: "medium", interest: "medium" },
-        { name: "국어", date: getFutureDate(8), score: "90", diff: "low", interest: "high" },
-        { name: "탐구 (사탐/과탐)", date: getFutureDate(11), score: "60", diff: "high", interest: "medium" }
-    ];
-
-    function getFutureDate(daysAhead) {
-        const d = new Date();
-        d.setDate(d.getDate() + daysAhead);
-        return d.toISOString().split('T')[0];
+    function updateVal(id, val) {
+        document.getElementById(id).innerText = val;
     }
 
-    function addSubjectRow(name = "", date = "", score = "70", diff = "medium", interest = "medium") {
-        const tbody = document.getElementById('subjectTableBody');
-        const row = document.createElement('tr');
+    // 우선순위 산식 (확정된 가중치 및 논의된 산식 반영)
+    function calculatePriorityScore(importance, urgency, difficulty, interest, prevScore, deadline) {
+        // 기본 척도 변환
+        const impWeight = importance * 3.5;    // 중요도 (최대 35점)
+        const urgWeight = urgency * 2.5;       // 긴급도 (최대 25점)
+        const diffWeight = difficulty * 1.5;   // 난이도 높을수록 가중치 (최대 15점)
+        
+        // 전 성적이 낮을수록(보완 필요) 우선순위 상승 (최대 15점)
+        const scoreNeed = prevScore !== "" ? ((100 - parseFloat(prevScore)) / 100) * 15 : 7.5;
+        
+        // 흥미도가 낮을수록 우선순위 배치 필요성 가중치 및 디데이 가중치 (최대 10점)
+        const interestGap = (11 - interest) * 0.5;
+        const deadlineBonus = Math.max(0, (15 - deadline) * 0.5);
 
-        row.innerHTML = `
-            <td><input type="text" class="form-control subj-name" value="${name}" placeholder="예: 수학"></td>
-            <td><input type="date" class="form-control subj-date" value="${date}"></td>
-            <td>
-                <select class="form-control subj-score">
-                    <option value="40" ${score <= 50 ? 'selected' : ''}>취약 (50점 이하)</option>
-                    <option value="70" ${score > 50 && score <= 80 ? 'selected' : ''}>보통 (60~80점)</option>
-                    <option value="90" ${score > 80 ? 'selected' : ''}>우수 (80점 이상)</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-control subj-diff">
-                    <option value="high" ${diff === 'high' ? 'selected' : ''}>상 (어려움)</option>
-                    <option value="medium" ${diff === 'medium' ? 'selected' : ''}>중 (보통)</option>
-                    <option value="low" ${diff === 'low' ? 'selected' : ''}>하 (쉬움)</option>
-                </select>
-            </td>
-            <td>
-                <select class="form-control subj-interest">
-                    <option value="high" ${interest === 'high' ? 'selected' : ''}>높음 (좋아함)</option>
-                    <option value="medium" ${interest === 'medium' ? 'selected' : ''}>보통</option>
-                    <option value="low" ${interest === 'low' ? 'selected' : ''}>낮음 (지루함)</option>
-                </select>
-            </td>
-            <td><button type="button" class="btn btn-danger" onclick="removeRow(this)">삭제</button></td>
-        `;
-        tbody.appendChild(row);
+        let total = impWeight + urgWeight + diffWeight + scoreNeed + interestGap + deadlineBonus;
+        return Math.min(100, Math.round(total));
     }
 
-    function removeRow(btn) {
-        const row = btn.closest('tr');
-        row.remove();
+    // 과목 추가 처리
+    document.getElementById('taskForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('subjectName').value;
+        const importance = parseInt(document.getElementById('importance').value);
+        const urgency = parseInt(document.getElementById('urgency').value);
+        const difficulty = parseInt(document.getElementById('difficulty').value);
+        const interest = parseInt(document.getElementById('interest').value);
+        const prevScore = document.getElementById('prevScore').value;
+        const deadline = parseInt(document.getElementById('deadline').value);
+
+        const score = calculatePriorityScore(importance, urgency, difficulty, interest, prevScore, deadline);
+
+        const newTask = {
+            id: Date.now(),
+            name,
+            importance,
+            urgency,
+            difficulty,
+            interest,
+            prevScore: prevScore || '-',
+            deadline,
+            score
+        };
+
+        tasks.push(newTask);
+        saveAndRender();
+        this.reset();
+        
+        // 슬라이더 기본값 리셋
+        ['impVal', 'urgVal', 'diffVal', 'intVal'].forEach(id => document.getElementById(id).innerText = '5');
+    });
+
+    function deleteTask(id) {
+        tasks = tasks.filter(t => t.id !== id);
+        saveAndRender();
     }
 
-    // 초기 예시 데이터 생성
-    defaultSubjects.forEach(s => addSubjectRow(s.name, s.date, s.score, s.diff, s.interest));
+    function saveAndRender() {
+        // 점수 내림차순 정렬
+        tasks.sort((a, b) => b.score - a.score);
+        localStorage.setItem('distribution_tasks', JSON.stringify(tasks));
+        renderList();
+        renderChart();
+    }
 
-    function calculatePlan() {
-        const startDateVal = document.getElementById('startDate').value;
-        const dailyHours = parseFloat(document.getElementById('dailyHours').value);
-        const focusMinutes = parseInt(document.getElementById('focusTime').value);
-
-        if (!startDateVal) {
-            alert('공부 시작일을 선택해주세요.');
+    function renderList() {
+        const listEl = document.getElementById('taskList');
+        if (tasks.length === 0) {
+            listEl.innerHTML = `
+                <div class="empty-state">
+                    <i class="fa-solid fa-folder-open"></i>
+                    등록된 과목이 없습니다.<br>왼쪽에서 과목 정보를 입력해 보세요.
+                </div>`;
             return;
         }
 
-        const startDate = new Date(startDateVal);
-        const rows = document.querySelectorAll('#subjectTableBody tr');
+        listEl.innerHTML = tasks.map(t => {
+            let badgeClass = 'badge-low';
+            let badgeText = '하';
+            if (t.score >= 75) { badgeClass = 'badge-high'; badgeText = '최상'; }
+            else if (t.score >= 55) { badgeClass = 'badge-mid'; badgeText = '상'; }
 
-        if (rows.length === 0) {
-            alert('최소 하나 이상의 과목을 입력해주세요.');
-            return;
-        }
-
-        let subjects = [];
-        let maxDaysToExam = -Infinity;
-
-        for (let row of rows) {
-            const name = row.querySelector('.subj-name').value.trim();
-            const dateVal = row.querySelector('.subj-date').value;
-            const scoreVal = parseFloat(row.querySelector('.subj-score').value);
-            const diffVal = row.querySelector('.subj-diff').value;
-            const interestVal = row.querySelector('.subj-interest').value;
-
-            if (!name || !dateVal) {
-                alert('모든 과목의 이름과 시험 날짜를 채워주세요.');
-                return;
-            }
-
-            const examDate = new Date(dateVal);
-            const timeDiff = examDate - startDate;
-            const daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
-
-            if (daysLeft <= 0) {
-                alert(`'${name}' 과목의 시험 날짜가 공부 시작일보다 같거나 이전입니다.`);
-                return;
-            }
-
-            if (daysLeft > maxDaysToExam) maxDaysToExam = daysLeft;
-
-            // 가중치 계산
-            let scoreWeight = (100 - scoreVal) / 100;
-            if (scoreWeight < 0.2) scoreWeight = 0.2;
-
-            let diffWeight = 1.0;
-            if (diffVal === 'high') diffWeight = 1.4;
-            else if (diffVal === 'medium') diffWeight = 1.0;
-            else if (diffVal === 'low') diffWeight = 0.7;
-
-            let interestWeight = 1.0;
-            if (interestVal === 'low') interestWeight = 1.25;
-            else if (interestVal === 'medium') interestWeight = 1.0;
-            else if (interestVal === 'high') interestWeight = 0.85;
-
-            let urgencyWeight = 1 / Math.sqrt(daysLeft);
-
-            let timeWeight = scoreWeight * diffWeight * interestWeight;
-            let priorityScore = (scoreWeight * 1.5 + diffWeight * 1.2 + interestWeight * 1.0) * (1 + urgencyWeight);
-
-            subjects.push({
-                name,
-                examDate: dateVal,
-                daysLeft,
-                scoreVal,
-                diffVal,
-                interestVal,
-                priorityScore,
-                timeWeight
-            });
-        }
-
-        const totalDays = maxDaysToExam;
-        const totalAvailableHours = totalDays * dailyHours;
-        const totalWeightSum = subjects.reduce((sum, s) => sum + s.timeWeight, 0);
-
-        subjects.forEach(s => {
-            s.allocatedHours = Math.round((s.timeWeight / totalWeightSum) * totalAvailableHours * 10) / 10;
-            s.percentage = Math.round((s.allocatedHours / totalAvailableHours) * 100);
-            
-            const totalMinutes = s.allocatedHours * 60;
-            s.sessionCount = Math.round(totalMinutes / focusMinutes);
-        });
-
-        subjects.sort((a, b) => b.priorityScore - a.priorityScore);
-
-        document.getElementById('sumTotalDays').textContent = `${totalDays} 일`;
-        document.getElementById('sumTotalHours').textContent = `${totalAvailableHours} 시간`;
-        document.getElementById('sumSubjectCount').textContent = `${subjects.length} 개`;
-
-        const planList = document.getElementById('planList');
-        planList.innerHTML = '';
-
-        subjects.forEach((s, index) => {
-            let diffText = s.diffVal === 'high' ? '상' : s.diffVal === 'medium' ? '중' : '하';
-            let scoreText = s.scoreVal <= 50 ? '취약 (50점 이하)' : s.scoreVal <= 80 ? '보통 (60~80점)' : '우수 (80점 이상)';
-            let interestText = s.interestVal === 'high' ? '높음' : s.interestVal === 'medium' ? '보통' : '낮음';
-
-            const item = document.createElement('div');
-            item.className = 'timeline-item';
-            item.innerHTML = `
-                <h3>
-                    <span><strong>#${index + 1}순위: ${s.name}</strong></span>
-                    <span class="badge">${s.allocatedHours} 시간 추천 (${s.percentage}%)</span>
-                </h3>
-                <div class="timeline-details">
-                    📅 시험: <strong>D-${s.daysLeft}</strong> (${s.examDate}) | 
-                    📊 성적: <strong>${scoreText}</strong> | 
-                    🔥 난이도: <strong>${diffText}</strong> | 
-                    ❤️ 흥미도: <strong>${interestText}</strong>
-                </div>
-                <div class="session-info">
-                    🎯 <strong>세션 플랜:</strong> ${focusMinutes}분 집중 기준 <strong>총 약 ${s.sessionCount}회 세션</strong> 학습 권장
-                </div>
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill" style="width: ${s.percentage}%"></div>
+            return `
+                <div class="task-item">
+                    <div class="task-info">
+                        <h4>${t.name} <span class="badge ${badgeClass}">${badgeText}</span></h4>
+                        <div class="task-tags">
+                            <span>D-${t.deadline}</span> • 
+                            <span>난이도 ${t.difficulty}</span> • 
+                            <span>전성적: ${t.prevScore}점</span>
+                        </div>
+                    </div>
+                    <div style="display:flex; align-items:center;">
+                        <div class="task-score">
+                            <div class="score-num">${t.score}</div>
+                            <div class="score-label">우선순위 점수</div>
+                        </div>
+                        <button class="delete-btn" onclick="deleteTask(${t.id})">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
                 </div>
             `;
-            planList.appendChild(item);
-        });
+        }).join('');
+    }
 
-        document.getElementById('resultSection').style.display = 'block';
-        document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+    function renderChart() {
+        const ctx = document.getElementById('priorityChart').getContext('2d');
+        
+        if (priorityChart) priorityChart.destroy();
+
+        if (tasks.length === 0) return;
+
+        priorityChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: tasks.map(t => t.name),
+                datasets: [{
+                    label: '우선순위 점수',
+                    data: tasks.map(t => t.score),
+                    backgroundColor: '#FF5E36',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { ticks: { color: '#8A96A3' }, grid: { display: false } },
+                    y: { ticks: { color: '#8A96A3' }, grid: { color: '#222933' }, min: 0, max: 100 }
+                }
+            }
+        });
+    }
+
+    // PDF 저장 함수
+    function exportToPDF() {
+        const element = document.getElementById('pdf-export-area');
+        const opt = {
+            margin:       10,
+            filename:     '분배의정석_학습우선순위_리포트.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2, backgroundColor: '#0A0C0E' },
+            jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+    }
+
+    // 초기 실행 시 예시 데이터 삽입 (텅 비어있을 때 사용자의 이해를 돕기 위함)
+    if (tasks.length === 0) {
+        tasks = [
+            { id: 1, name: "수학 I 기말고사 대비", importance: 9, urgency: 8, difficulty: 9, interest: 4, prevScore: "62", deadline: 5, score: 88 },
+            { id: 2, name: "영어 단어 암기", importance: 6, urgency: 7, difficulty: 4, interest: 7, prevScore: "85", deadline: 3, score: 64 }
+        ];
+        saveAndRender();
+    } else {
+        saveAndRender();
     }
 </script>
-
 </body>
 </html>
